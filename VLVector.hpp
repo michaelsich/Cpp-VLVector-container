@@ -7,21 +7,25 @@
 
 #include <cstddef>
 #include <iterator>
+#include <cmath>
 
 #define DEFAULT_STATIC_CAPACITY     16
+#define CAP_C_FACTOR                (3 / 2)
 
 template<class T, size_t StaticCapacity = DEFAULT_STATIC_CAPACITY>
 class VLVector
 {
 public:
-    typedef typename VLVector<T>::VecIter iterator;
-    typedef typename VLVector<T>::ConstVecIter const_iterator;
+    typedef typename VLVector<T>::VecIter       iterator;
+    typedef typename VLVector<T>::ConstVecIter  const_iterator;
 
     VLVector() : mSize(0), mCapacity(0) {*mainArr = {};};
     VLVector(const VLVector<T>& vecToCopy);
     template<class InputIterator>
     VLVector(InputIterator& first, InputIterator& last);
     ~VLVector();
+
+
 
     inline size_t  size()      const noexcept {return mSize;}
     inline size_t  capacity()  const noexcept {return mCapacity;}
@@ -33,6 +37,8 @@ private:
     size_t  mSize;
     size_t  mCapacity;
     T*      mainArr;
+
+    size_t  _capC(const size_t& newElements) const;
 
     //region class Iterators
     class VecIter
@@ -144,7 +150,7 @@ private:
 };
 
 /**
- * @brief Copy Construcor
+ * @brief Copy Constructor
  * @tparam T
  * @tparam StaticCapacity
  * @param vecToCopy
@@ -180,6 +186,24 @@ VLVector<T, StaticCapacity>::~VLVector()
     if (mCapacity > StaticCapacity)
     {
         delete[] mainArr;
+    }
+}
+
+/**
+ * @brief calculates the best capacity for VLVector
+ * @param newElements num of elements of T planned to be added
+ * @return best calculated capacity
+ */
+template<class T, size_t StaticCapacity>
+size_t VLVector<T, StaticCapacity>::_capC(const size_t &newElements) const
+{
+    if (mSize + newElements <= StaticCapacity)
+    {
+        return StaticCapacity;
+    }
+    else
+    {
+        return std::floor((CAP_C_FACTOR) * (mSize + newElements) );
     }
 }
 
