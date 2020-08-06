@@ -37,9 +37,16 @@ public:
     inline size_t  capacity()  const noexcept   {return mCapacity;}
     inline bool    empty()     const noexcept   {return (mSize == 0);}
     inline T*      data()      const noexcept   {return mainArr;}
-
-    T&      at(size_t i);
+    T&      at (size_t i);
     void    push_back(const T& element);
+    void    pop_back()  noexcept;
+    void    clear()     noexcept;
+
+    T&          operator[]  (const size_t& i)       noexcept;
+    const T&    operator[]  (const size_t& i) const noexcept;
+    bool        operator==  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    bool        operator!=  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    VLVector<T, StaticCapacity>& operator= (const VLVector<T,StaticCapacity>& rhs);
 
 private:
     enum ArrType
@@ -59,6 +66,10 @@ private:
     size_t  _capC            (const size_t& newElements)    const;
     void    _enlargeCapacity (const size_t &newElements);
     void    _copyAllElements (T* destination)               const;
+    void    _switchToStackArr();
+
+    template<class InputIterator>
+    unsigned int _countElements (InputIterator from, InputIterator to) const;
 
     //region class Iterators
     class Iterator
@@ -169,6 +180,29 @@ private:
 
 };
 
+template<class T, size_t StaticCapacity>
+template<class InputIterator>
+VLVector<T, StaticCapacity>::VLVector(InputIterator& first, InputIterator& last)
+{
+    size_t  index = 0;
+    unsigned int newElements = _countElements(first, last);
+
+    mCapacity = StaticCapacity;
+    mSize = 0;
+    mainArr(stackArr);
+    mArrType(STATIC);
+
+    if (newElements > mCapacity)
+    {   // need to enlarge
+        _enlargeCapacity(newElements);
+    }
+
+    while (first != last)
+    {
+        mainArr[index++] = *first;
+    }
+}
+
 /**
  * @brief Copy Constructor
  * @tparam T
@@ -223,8 +257,6 @@ T &VLVector<T, StaticCapacity>::at(size_t i)
     return mainArr[i];
 }
 
-
-
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::push_back(const T &element)
 {
@@ -234,6 +266,107 @@ void VLVector<T, StaticCapacity>::push_back(const T &element)
     }
     mainArr[mSize++] = element;
 }
+
+template<class T, size_t StaticCapacity>
+void VLVector<T, StaticCapacity>::clear() noexcept
+{
+    if (mArrType == DYNAMIC)
+    {
+        delete [] mainArr;
+    }
+    mainArr = stackArr;
+    mArrType = STATIC;
+    mSize = 0;
+    mCapacity = StaticCapacity;
+
+}
+
+
+template<class T, size_t StaticCapacity>
+void VLVector<T, StaticCapacity>::pop_back() noexcept
+{
+    mSize--;
+    if (mSize <= StaticCapacity && mArrType == DYNAMIC)
+    {
+        _switchToStackArr();
+    }
+}
+
+
+template<class T, size_t StaticCapacity>
+VLVector<T, StaticCapacity> &
+VLVector<T, StaticCapacity>::operator=(const VLVector<T, StaticCapacity> &rhs)
+{
+    if (this == rhs)
+    {
+        return *this;
+    }
+    if (this->mArrType == DYNAMIC)
+    {
+        delete[] mainArr;
+        mainArr = stackArr;
+    }
+    mArrType    = rhs.mArrType;
+    mCapacity   = rhs.mCapacity;
+    mSize       = rhs.mSize;
+
+    if (mArrType == DYNAMIC)
+    {
+        mainArr = new T[mCapacity];
+    }
+    for (size_t i = 0; i < mSize; ++i)
+    {
+        mainArr[i] = rhs.mainArr[i];
+    }
+    return *this;
+}
+
+
+template<class T, size_t StaticCapacity>
+T &VLVector<T, StaticCapacity>::operator[](const size_t &i) noexcept
+{
+    return mainArr[i];
+}
+
+template<class T, size_t StaticCapacity>
+const T &VLVector<T, StaticCapacity>::operator[](const size_t &i) const noexcept
+{
+    return mainArr[i];
+}
+
+
+template<class T, size_t StaticCapacity>
+bool VLVector<T, StaticCapacity>::operator==(const VLVector<T, StaticCapacity> &rhs) const noexcept
+{
+    if (mSize != rhs.mSize)
+    {
+        return false;
+    }
+    for (size_t i = 0; i < mSize; ++i)
+    {
+        if (mainArr[i] != rhs.mainArr[i])
+            return false;
+    }
+    return true;
+}
+
+template<class T, size_t StaticCapacity>
+bool VLVector<T, StaticCapacity>::operator!=(const VLVector<T, StaticCapacity> &rhs) const noexcept
+{
+    if (mSize != rhs.mSize)
+    {
+        return true;
+    }
+    for (size_t i = 0; i < mSize; ++i)
+    {
+        if (mainArr[i] != rhs.mainArr[i])
+            return true;
+    }
+    return false;
+}
+
+
+
 
 //region private methods
 /**
@@ -282,6 +415,31 @@ void VLVector<T, StaticCapacity>::_copyAllElements(T *destination) const
     }
 }
 
+template<class T, size_t StaticCapacity>
+template<class InputIterator>
+unsigned int VLVector<T, StaticCapacity>::_countElements(InputIterator from, InputIterator to) const
+{
+    unsigned int countedElements = 0;
+    while (from != to)
+    {
+        countedElements++;
+        from++;
+    }
+    return countedElements;
+}
+
+template<class T, size_t StaticCapacity>
+void VLVector<T, StaticCapacity>::_switchToStackArr()
+{
+    for (int i = 0; i < mSize; ++i)
+    {
+        stackArr[i] = mainArr[i];
+    }
+    delete[] mainArr;
+    mainArr = stackArr;
+    mCapacity = StaticCapacity;
+    mArrType = STATIC;
+}
 
 //endregion
 
