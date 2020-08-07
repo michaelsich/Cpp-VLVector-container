@@ -22,8 +22,14 @@ template<class T, size_t StaticCapacity = DEFAULT_STATIC_CAPACITY>
 class VLVector
 {
 public:
-    typedef typename std::vector<T>::iterator       iterator;
-    typedef typename std::vector<T>::const_iterator const_iterator;
+    typedef T* iterator;
+    
+    //TODO: delete commented
+//    typedef typename VLVector<T>::Iterator      iterator;
+//    typedef typename VLVector<T>::ConstIterator const_iterator;
+//
+//    typedef typename std::vector<T>::iterator       iterator;
+//    typedef typename std::vector<T>::const_iterator const_iterator;
 
     VLVector() : mSize(0), mCapacity(StaticCapacity), mainArr(stackArr), mArrType(STATIC) {};
     VLVector(const VLVector<T>& vecToCopy);
@@ -48,6 +54,8 @@ public:
     bool        operator!=  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
     VLVector<T, StaticCapacity>& operator= (const VLVector<T,StaticCapacity>& rhs);
 
+
+
 private:
     enum ArrType
     {
@@ -71,6 +79,7 @@ private:
     template<class InputIterator>
     unsigned int _countElements (InputIterator from, InputIterator to) const;
 
+public://TODO: try to change to private
     //region class Iterators
     class Iterator
     {
@@ -124,7 +133,7 @@ private:
         T* currIter;
     };
 
-    class ConstVecIter
+    class ConstIterator
     {
     public:
         /* iter traits */
@@ -135,7 +144,7 @@ private:
         typedef std::random_access_iterator_tag iterator_category;
 
         /* read / write */
-        ConstVecIter(pointer ptr = nullptr) : currIter(ptr) {};
+        ConstIterator(pointer ptr = nullptr) : currIter(ptr) {};
         inline  value_type operator*() const     {return *currIter;} // de-reference iter
 
         /* iteration */
@@ -184,22 +193,18 @@ template<class T, size_t StaticCapacity>
 template<class InputIterator>
 VLVector<T, StaticCapacity>::VLVector(InputIterator& first, InputIterator& last)
 {
-    size_t  index = 0;
-    unsigned int newElements = _countElements(first, last);
-
     mCapacity = StaticCapacity;
     mSize = 0;
     mainArr(stackArr);
     mArrType(STATIC);
 
-    if (newElements > mCapacity)
-    {   // need to enlarge
-        _enlargeCapacity(newElements);
-    }
-
     while (first != last)
     {
-        mainArr[index++] = *first;
+        if (mSize > mCapacity)
+        {   // need to enlarge
+            _enlargeCapacity(DEFAULT_ADDED_ELEMENTS);
+        }
+        mainArr[mSize++] = *first;
     }
 }
 
@@ -415,6 +420,7 @@ void VLVector<T, StaticCapacity>::_copyAllElements(T *destination) const
     }
 }
 
+//TODO: consider deletion of this method
 template<class T, size_t StaticCapacity>
 template<class InputIterator>
 unsigned int VLVector<T, StaticCapacity>::_countElements(InputIterator from, InputIterator to) const
