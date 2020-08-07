@@ -28,7 +28,7 @@ public:
     VLVector() : mSize(0), mCapacity(StaticCapacity), mainArr(stackArr), mArrType(STATIC) {};
     VLVector(const VLVector<T>& vecToCopy);
     template<class InputIterator>
-    VLVector(InputIterator& first, InputIterator& last);
+    VLVector(InputIterator first, InputIterator last);
     ~VLVector();
 
     /* iterator methods */
@@ -91,12 +91,12 @@ private:
 
 template<class T, size_t StaticCapacity>
 template<class InputIterator>
-VLVector<T, StaticCapacity>::VLVector(InputIterator& first, InputIterator& last)
+VLVector<T, StaticCapacity>::VLVector(InputIterator first, InputIterator last)
 {
     mCapacity = StaticCapacity;
     mSize = 0;
-    mainArr(stackArr);
-    mArrType(STATIC);
+    mainArr = stackArr;
+    mArrType = STATIC;
 
     while (first != last)
     {
@@ -105,6 +105,7 @@ VLVector<T, StaticCapacity>::VLVector(InputIterator& first, InputIterator& last)
             _enlargeCapacity(DEFAULT_ADDED_ELEMENTS);
         }
         mainArr[mSize++] = *first;
+        first++;
     }
 }
 
