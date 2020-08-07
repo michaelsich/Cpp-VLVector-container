@@ -57,8 +57,9 @@ public:
     VLVector<T, StaticCapacity>& operator= (const VLVector<T,StaticCapacity>& rhs);
 
     /* modifiers */
-    auto    insert(const_iterator position, const T& element);
     auto    erase (const_iterator position);
+    auto    erase (const_iterator first, const_iterator last);
+    auto    insert(const_iterator position, const T& element);
     template<class InputIter>
     auto    insert(const_iterator position, InputIter first, InputIter last);
 
@@ -337,6 +338,43 @@ auto VLVector<T, StaticCapacity>::erase(VLVector::const_iterator position)
 }
 
 
+template<class T, size_t StaticCapacity>
+auto
+VLVector<T, StaticCapacity>::erase(VLVector::const_iterator first, VLVector::const_iterator last)
+{
+    size_t  firstIndex   = _findIndexOf(first);
+    size_t  lastIndex    = _findIndexOf(last);
+    if (firstIndex >= lastIndex)
+    {   // empty range
+        return mainArr + lastIndex;
+    }
+
+    if (mSize - (lastIndex - firstIndex) <= StaticCapacity)
+    {   // need to switch back to stack array
+        for (size_t i = 0; i < mSize - (lastIndex - firstIndex); ++i)
+        {
+            if (i < firstIndex)
+            {   //copy normally
+                stackArr[i] = mainArr[i];
+            }
+            else
+            {
+                stackArr[i] = mainArr[lastIndex - firstIndex + i];
+            }
+        }
+        _switchToStackArr();
+    }
+    else
+    {
+        for (size_t i = 0; i < mSize - lastIndex; ++i)
+        {
+            mainArr[firstIndex + i] = mainArr[lastIndex + i];
+        }
+    }
+    mSize -= (lastIndex - firstIndex);
+    return mainArr + firstIndex;
+}
+
 
 //region private methods
 /**
@@ -422,7 +460,7 @@ size_t VLVector<T, StaticCapacity>::_findIndexOf(VLVector::const_iterator positi
         currIndex++;
         start++;
     }
-    return -1;
+    return mSize;
 }
 
 

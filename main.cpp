@@ -25,13 +25,13 @@ int main()
     }
     std::cout << " }" << std::endl;
 
-    auto it = myVec.end();
-    it -= 2;
+    auto it1 = myVec.begin();
+    auto it2 = myVec.end();
+    it1 += 3;
+    it2 -= 3;
 //    std::vector<int> v = {0};
 
-//    auto it = myVec.begin();
-//    it += 1;
-    myVec.erase(it);
+    it1 = myVec.erase(it1, it2);
 
     std::cout << "--------------------------------------" << std::endl;
     std::cout << "size: " << myVec.size() << std::endl;
@@ -43,7 +43,7 @@ int main()
     }
     std::cout << " }" << std::endl;
 
-    std::cout << "'it' points: "<< *it << std::endl;
+    std::cout << "'it' points: "<< *it1 << std::endl;
 
     return 0;
 }
