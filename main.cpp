@@ -1,5 +1,6 @@
 #include <iostream>
 #include "VLVector.hpp"
+#include <vector>
 
 int main()
 {
@@ -13,32 +14,36 @@ int main()
     myVec2.push_back(6);
     myVec2.push_back(7);
 
-    VLVector<int,2> myVec(myVec2);
+    VLVector<int,2> myVec = myVec2;
 
     std::cout << "size: " << myVec.size() << std::endl;
     std::cout << "capacity: " << myVec.capacity() << std::endl << std::endl;
     std::cout << "{ ";
-    for (int i = 0; i < myVec.size(); ++i)
+    for (int i : myVec)
     {
-        std::cout <<     myVec.at(i) << ", ";
+        std::cout << i << ", ";
     }
     std::cout << " }" << std::endl;
 
-    myVec.pop_back();
-    myVec.pop_back();
-    myVec.pop_back();
-    myVec.pop_back();
+    auto it = myVec.end();
+    it -= 2;
+//    std::vector<int> v = {0};
+
+//    auto it = myVec.begin();
+//    it += 1;
+    myVec.erase(it);
+
     std::cout << "--------------------------------------" << std::endl;
-
     std::cout << "size: " << myVec.size() << std::endl;
     std::cout << "capacity: " << myVec.capacity() << std::endl << std::endl;
     std::cout << "{ ";
-    for (int i = 0; i < myVec.size(); ++i)
+    for (int i : myVec)
     {
-        std::cout <<     myVec.at(i) << ", ";
+        std::cout << i << ", ";
     }
     std::cout << " }" << std::endl;
 
+    std::cout << "'it' points: "<< *it << std::endl;
 
     return 0;
 }

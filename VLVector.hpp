@@ -15,21 +15,15 @@
 #define CAP_C_FACTOR                (3.0 / 2.0)
 #define DEFAULT_ADDED_ELEMENTS      1
 
-#define ERR_OUT_OF_RANGE            "Out of range"
-#define ERR_INVALID_POP             "No elements to pop"
+#define ERR_OUT_OF_RANGE            "Out of range!"
 
 template<class T, size_t StaticCapacity = DEFAULT_STATIC_CAPACITY>
 class VLVector
 {
 public:
-    typedef T* iterator;
-    
-    //TODO: delete commented
-//    typedef typename VLVector<T>::Iterator      iterator;
-//    typedef typename VLVector<T>::ConstIterator const_iterator;
-//
-//    typedef typename std::vector<T>::iterator       iterator;
-//    typedef typename std::vector<T>::const_iterator const_iterator;
+    typedef T*          iterator;
+    typedef const T*    const_iterator;
+    typedef ptrdiff_t   difference_type;    // I think this the default type for pointer diff
 
     VLVector() : mSize(0), mCapacity(StaticCapacity), mainArr(stackArr), mArrType(STATIC) {};
     VLVector(const VLVector<T>& vecToCopy);
@@ -37,8 +31,15 @@ public:
     VLVector(InputIterator& first, InputIterator& last);
     ~VLVector();
 
-    iterator begin();
+    /* iterator methods */
+    inline  iterator        begin()            {return mainArr;};
+    inline  iterator        end()              {return mainArr + mSize;};
+    inline  const_iterator  begin()    const   {return mainArr;}
+    inline  const_iterator  end()      const   {return mainArr + mSize;};
+    inline  const_iterator  cbegin()   const   {return mainArr;};
+    inline  const_iterator  cend()     const   {return mainArr + mSize;};
 
+    /* class methods */
     inline size_t  size()      const noexcept   {return mSize;}
     inline size_t  capacity()  const noexcept   {return mCapacity;}
     inline bool    empty()     const noexcept   {return (mSize == 0);}
@@ -48,13 +49,18 @@ public:
     void    pop_back()  noexcept;
     void    clear()     noexcept;
 
-    T&          operator[]  (const size_t& i)       noexcept;
-    const T&    operator[]  (const size_t& i) const noexcept;
-    bool        operator==  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    /* operators overloads */
+    T&          operator[]  (const size_t& i)        noexcept;
+    const T&    operator[]  (const size_t& i)  const noexcept;
     bool        operator!=  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    bool        operator==  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
     VLVector<T, StaticCapacity>& operator= (const VLVector<T,StaticCapacity>& rhs);
 
-
+    /* modifiers */
+    auto    insert(const_iterator position, const T& element);
+    auto    erase (const_iterator position);
+    template<class InputIter>
+    auto    insert(const_iterator position, InputIter first, InputIter last);
 
 private:
     enum ArrType
@@ -71,121 +77,14 @@ private:
     ArrType mArrType;
     //endregion
 
-    size_t  _capC            (const size_t& newElements)    const;
     void    _enlargeCapacity (const size_t &newElements);
     void    _copyAllElements (T* destination)               const;
+    size_t  _findIndexOf     (const_iterator position)      const;
+    size_t  _capC            (const size_t& newElements)    const;
     void    _switchToStackArr();
 
-    template<class InputIterator>
+    template<class InputIterator> //TODO: consider deletion of this method
     unsigned int _countElements (InputIterator from, InputIterator to) const;
-
-public://TODO: try to change to private
-    //region class Iterators
-    class Iterator
-    {
-    public:
-        /* iter traits */
-        typedef T           value_type;
-        typedef T&          reference;
-        typedef T*          pointer;
-        typedef ptrdiff_t   difference_type;
-        typedef std::random_access_iterator_tag iterator_category;
-
-        /* read / write */
-        Iterator(pointer ptr = nullptr) : currIter(ptr) {};
-        inline  reference operator*() const     {return *currIter;} // de-reference iter
-
-        /* iteration */
-        inline  iterator&   operator++()   {currIter = currIter + 1; return *this;}
-        inline  iterator&   operator--()   {currIter = currIter - 1; return *this;}
-        inline  iterator&   operator-=(difference_type rhs) {currIter -= rhs; return *this;}
-        inline  iterator&   operator+=(difference_type rhs) {currIter += rhs; return *this;}
-        inline  iterator    operator-(difference_type rhs) const {return iterator(currIter - rhs);}
-        inline  iterator    operator+(difference_type rhs) const {return iterator(currIter + rhs);}
-
-        friend iterator operator-(difference_type distance,
-                                  const iterator& rhs) {return Iterator(distance - rhs.currIter);}
-        friend iterator operator+(difference_type distance,
-                                  const iterator& rhs) {return Iterator(distance + rhs.currIter);}
-
-        iterator operator++(int)
-        {
-            iterator temp(*this);
-            currIter++;
-            return temp;
-        }
-        iterator operator--(int)
-        {
-            iterator temp(*this);
-            currIter++;
-            return temp;
-        }
-
-        // comparison section
-        inline bool operator==  (const iterator& rhs) const {return currIter == rhs.currIter;}
-        inline bool operator!=  (const iterator& rhs) const {return currIter != rhs.currIter;}
-        inline bool operator>=  (const iterator& rhs) const {return currIter >= rhs.currIter;}
-        inline bool operator<=  (const iterator& rhs) const {return currIter <= rhs.currIter;}
-        inline bool operator<   (const iterator& rhs) const {return currIter <  rhs.currIter;}
-        inline bool operator>   (const iterator& rhs) const {return currIter >  rhs.currIter;}
-
-    private:
-        T* currIter;
-    };
-
-    class ConstIterator
-    {
-    public:
-        /* iter traits */
-        typedef T           value_type;
-        typedef T&          reference;
-        typedef T*          pointer;
-        typedef ptrdiff_t   difference_type;
-        typedef std::random_access_iterator_tag iterator_category;
-
-        /* read / write */
-        ConstIterator(pointer ptr = nullptr) : currIter(ptr) {};
-        inline  value_type operator*() const     {return *currIter;} // de-reference iter
-
-        /* iteration */
-        inline  const_iterator&   operator++()   {currIter = currIter + 1; return *this;}
-        inline  const_iterator&   operator--()   {currIter = currIter - 1; return *this;}
-        inline  const_iterator&   operator-=(difference_type rhs) {currIter -= rhs; return *this;}
-        inline  const_iterator&   operator+=(difference_type rhs) {currIter += rhs; return *this;}
-        inline  const_iterator    operator-(difference_type rhs) const {return const_iterator(currIter - rhs);}
-        inline  const_iterator    operator+(difference_type rhs) const {return const_iterator(currIter + rhs);}
-
-        friend const_iterator operator-(difference_type distance,
-                                  const const_iterator& rhs) {return Iterator(distance - rhs.currIter);}
-        friend const_iterator operator+(difference_type distance,
-                                  const const_iterator& rhs) {return Iterator(distance + rhs.currIter);}
-
-        const_iterator operator++(int)
-        {
-            iterator temp(*this);
-            currIter++;
-            return temp;
-        }
-        const_iterator operator--(int)
-        {
-            iterator temp(*this);
-            currIter++;
-            return temp;
-        }
-
-        // comparison section
-        inline bool operator==  (const const_iterator& rhs) const {return currIter == rhs.currIter;}
-        inline bool operator!=  (const const_iterator& rhs) const {return currIter != rhs.currIter;}
-        inline bool operator>=  (const const_iterator& rhs) const {return currIter >= rhs.currIter;}
-        inline bool operator<=  (const const_iterator& rhs) const {return currIter <= rhs.currIter;}
-        inline bool operator<   (const const_iterator& rhs) const {return currIter <  rhs.currIter;}
-        inline bool operator>   (const const_iterator& rhs) const {return currIter >  rhs.currIter;}
-
-    private:
-        T* currIter;
-    };
-    //endregion
-
 
 };
 
@@ -293,6 +192,7 @@ void VLVector<T, StaticCapacity>::pop_back() noexcept
     mSize--;
     if (mSize <= StaticCapacity && mArrType == DYNAMIC)
     {
+        _copyAllElements(stackArr);
         _switchToStackArr();
     }
 }
@@ -371,6 +271,71 @@ bool VLVector<T, StaticCapacity>::operator!=(const VLVector<T, StaticCapacity> &
 }
 
 
+template<class T, size_t StaticCapacity>
+auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, const T &element)
+{
+    size_t posIndex = _findIndexOf(position);
+
+    if (mSize >= mCapacity)
+    {
+        _enlargeCapacity(DEFAULT_ADDED_ELEMENTS);
+    }
+    for (int i = mSize; i > posIndex; --i)
+    {
+            mainArr[i] = mainArr[i - 1];
+    }
+    mainArr[posIndex] = element;
+    mSize++;
+    return mainArr + posIndex;
+}
+
+
+template<class T, size_t StaticCapacity>
+template <class InputIterator>
+auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, InputIterator first,
+                                         InputIterator last)
+{
+    size_t posIndex = _findIndexOf(position);
+    auto currIter = mainArr + posIndex;
+    while (first != last)
+    {
+        currIter = insert(currIter, *first) + 1;
+        first++;
+    }
+    return mainArr + posIndex;
+}
+
+
+template<class T, size_t StaticCapacity>
+auto VLVector<T, StaticCapacity>::erase(VLVector::const_iterator position)
+{
+    size_t indexOfDel = _findIndexOf(position);
+    if ((mSize - 1) == StaticCapacity)
+    {
+        for (size_t i = 0; i < (mSize - 1); ++i)
+        {
+            if (i < indexOfDel)
+            {
+                stackArr[i] = mainArr[i];
+            }
+            else
+            {
+                stackArr[i] = mainArr[i + 1];
+            }
+        }
+        _switchToStackArr();
+    }
+    else
+    {
+        for (int i = indexOfDel; i < mSize; ++i)
+        {
+            mainArr[i] = mainArr[i + 1];
+        }
+    }
+    --mSize;
+    return mainArr + indexOfDel;
+}
+
 
 
 //region private methods
@@ -437,15 +402,29 @@ unsigned int VLVector<T, StaticCapacity>::_countElements(InputIterator from, Inp
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::_switchToStackArr()
 {
-    for (int i = 0; i < mSize; ++i)
-    {
-        stackArr[i] = mainArr[i];
-    }
     delete[] mainArr;
     mainArr = stackArr;
     mCapacity = StaticCapacity;
     mArrType = STATIC;
 }
+
+template<class T, size_t StaticCapacity>
+size_t VLVector<T, StaticCapacity>::_findIndexOf(VLVector::const_iterator position) const
+{
+    size_t currIndex = 0;
+    auto start = this->begin();
+    for (int i = 0; i < mSize; ++i)
+    {
+        if (start == position)
+        {
+            return currIndex;
+        }
+        currIndex++;
+        start++;
+    }
+    return -1;
+}
+
 
 //endregion
 
