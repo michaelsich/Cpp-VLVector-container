@@ -8,62 +8,165 @@
 #include <cstddef>
 #include <stdexcept>
 #include <cmath>
-#include <iterator> //TODO: delete~~~~!!!!
-#include <vector>
+#include <iterator>
 
-#define DEFAULT_STATIC_CAPACITY     16
-#define CAP_C_FACTOR                (3.0 / 2.0)
-#define DEFAULT_ADDED_ELEMENTS      1
-
+#define DEFAULT_STATIC_CAPACITY     16              // default stack array size capacity
+#define CAP_C_FACTOR                (3.0 / 2.0)     // ratio for best memory management
+#define DEFAULT_ADDED_ELEMENTS      1               // number of elements added in a signle insert
 #define ERR_OUT_OF_RANGE            "Out of range!"
 
+/**
+ * @brief Variable lenght vector - using stack alloc'd array if possible ( until max size reached
+ * then switches to heap alloced array
+ * @tparam T type
+ * @tparam StaticCapacity stack alloced array size
+ */
 template<class T, size_t StaticCapacity = DEFAULT_STATIC_CAPACITY>
 class VLVector
 {
 public:
-    typedef T*          iterator;
-    typedef const T*    const_iterator;
-    typedef ptrdiff_t   difference_type;    // I think this the default type for pointer diff
+    /* iterator traits */
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef T               value_type;
+    typedef T*              pointer;
+    typedef T&              reference;
+    typedef ptrdiff_t       difference_type;
 
+    typedef pointer         iterator;
+    typedef const pointer   const_iterator;
+
+    /**
+     * @brief default ctor
+     */
     VLVector() : mSize(0), mCapacity(StaticCapacity), mainArr(stackArr), mArrType(STATIC) {};
+    /**
+     * @brief copy ctor
+     * @param vecToCopy
+     */
     VLVector(const VLVector<T>& vecToCopy);
+    /**
+     * @brief ctor
+     * @tparam InputIterator
+     * @param first
+     * @param last
+     */
     template<class InputIterator>
     VLVector(InputIterator first, InputIterator last);
+    /**
+     * @brief dtor
+     */
     ~VLVector();
 
     /* iterator methods */
+    /**
+     * @brief
+     */
     inline  iterator        begin()            {return mainArr;};
+    /**
+     * @brief
+     */
     inline  iterator        end()              {return mainArr + mSize;};
+    /**
+     * @brief
+     */
     inline  const_iterator  begin()    const   {return mainArr;}
+    /**
+     * @brief
+     */
     inline  const_iterator  end()      const   {return mainArr + mSize;};
+    /**
+     * @brief
+     */
     inline  const_iterator  cbegin()   const   {return mainArr;};
+    /**
+     * @brief
+     */
     inline  const_iterator  cend()     const   {return mainArr + mSize;};
 
     /* class methods */
+    /**
+     * @brief
+     */
     inline size_t  size()      const noexcept   {return mSize;}
+    /**
+     * @brief
+     */
     inline size_t  capacity()  const noexcept   {return mCapacity;}
+    /**
+     * @brief
+     */
     inline bool    empty()     const noexcept   {return (mSize == 0);}
+    /**
+     * @brief
+     */
     inline T*      data()      const noexcept   {return mainArr;}
+    /**
+     * @brief
+     */
     T&      at (size_t i);
+    /**
+     * @brief
+     */
     void    push_back(const T& element);
+    /**
+     * @brief
+     */
     void    pop_back()  noexcept;
+    /**
+     * @brief
+     */
     void    clear()     noexcept;
 
     /* operators overloads */
+    /**
+     * @brief
+     */
     T&          operator[]  (const size_t& i)        noexcept;
+    /**
+     * @brief
+     */
     const T&    operator[]  (const size_t& i)  const noexcept;
+    /**
+     * @brief
+     */
     bool        operator!=  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    /**
+     * @brief
+     */
     bool        operator==  (const VLVector<T, StaticCapacity>& rhs) const noexcept;
+    /**
+     * @brief
+     */
     VLVector<T, StaticCapacity>& operator= (const VLVector<T,StaticCapacity>& rhs);
 
     /* modifiers */
+    /**
+     * @brief
+     */
     auto    erase (const_iterator position);
+    /**
+     * @brief
+     */
     auto    erase (const_iterator first, const_iterator last);
+    /**
+     * @brief
+     */
     auto    insert(const_iterator position, const T& element);
+    /**
+     * @brief
+     * @tparam InputIter
+     * @param position
+     * @param first
+     * @param last
+     * @return
+     */
     template<class InputIter>
     auto    insert(const_iterator position, InputIter first, InputIter last);
 
 private:
+    /**
+     * @brief representing current array type pointed by mainArr
+     */
     enum ArrType
     {
         DYNAMIC,
@@ -78,17 +181,37 @@ private:
     ArrType mArrType;
     //endregion
 
+    /**
+     * @brief allocates dynamic array accroding to capC
+     * @param newElements
+     */
     void    _enlargeCapacity (const size_t &newElements);
+    /**
+     * @brief copies all elemnts one-by-one from main arr to destinatopn
+     */
     void    _copyAllElements (T* destination)               const;
+    /**
+     * @brief returns index of given iterator (if not found returns last index )
+     */
     size_t  _findIndexOf     (const_iterator position)      const;
+    /**
+     * @brief calcs best capcity
+     */
     size_t  _capC            (const size_t& newElements)    const;
+    /**
+     * @brief changes all class members to stack array (deletes dynamic array)
+     */
     void    _switchToStackArr();
-
-    template<class InputIterator> //TODO: consider deletion of this method
-    unsigned int _countElements (InputIterator from, InputIterator to) const;
-
 };
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @tparam InputIterator
+ * @param first
+ * @param last
+ */
 template<class T, size_t StaticCapacity>
 template<class InputIterator>
 VLVector<T, StaticCapacity>::VLVector(InputIterator first, InputIterator last)
@@ -153,6 +276,13 @@ VLVector<T, StaticCapacity>::~VLVector()
     }
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param i
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 T &VLVector<T, StaticCapacity>::at(size_t i)
 {
@@ -163,6 +293,12 @@ T &VLVector<T, StaticCapacity>::at(size_t i)
     return mainArr[i];
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param element
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::push_back(const T &element)
 {
@@ -173,6 +309,11 @@ void VLVector<T, StaticCapacity>::push_back(const T &element)
     mainArr[mSize++] = element;
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::clear() noexcept
 {
@@ -187,7 +328,11 @@ void VLVector<T, StaticCapacity>::clear() noexcept
 
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::pop_back() noexcept
 {
@@ -199,7 +344,13 @@ void VLVector<T, StaticCapacity>::pop_back() noexcept
     }
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param rhs
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 VLVector<T, StaticCapacity> &
 VLVector<T, StaticCapacity>::operator=(const VLVector<T, StaticCapacity> &rhs)
@@ -228,20 +379,39 @@ VLVector<T, StaticCapacity>::operator=(const VLVector<T, StaticCapacity> &rhs)
     return *this;
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param i
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 T &VLVector<T, StaticCapacity>::operator[](const size_t &i) noexcept
 {
     return mainArr[i];
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param i
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 const T &VLVector<T, StaticCapacity>::operator[](const size_t &i) const noexcept
 {
     return mainArr[i];
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param rhs
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 bool VLVector<T, StaticCapacity>::operator==(const VLVector<T, StaticCapacity> &rhs) const noexcept
 {
@@ -257,6 +427,13 @@ bool VLVector<T, StaticCapacity>::operator==(const VLVector<T, StaticCapacity> &
     return true;
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param rhs
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 bool VLVector<T, StaticCapacity>::operator!=(const VLVector<T, StaticCapacity> &rhs) const noexcept
 {
@@ -272,7 +449,14 @@ bool VLVector<T, StaticCapacity>::operator!=(const VLVector<T, StaticCapacity> &
     return false;
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @param element
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, const T &element)
 {
@@ -291,7 +475,16 @@ auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, cons
     return mainArr + posIndex;
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @tparam InputIterator
+ * @param position
+ * @param first
+ * @param last
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 template <class InputIterator>
 auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, InputIterator first,
@@ -307,7 +500,13 @@ auto VLVector<T, StaticCapacity>::insert(VLVector::const_iterator position, Inpu
     return mainArr + posIndex;
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 auto VLVector<T, StaticCapacity>::erase(VLVector::const_iterator position)
 {
@@ -338,7 +537,13 @@ auto VLVector<T, StaticCapacity>::erase(VLVector::const_iterator position)
     return mainArr + indexOfDel;
 }
 
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 auto
 VLVector<T, StaticCapacity>::erase(VLVector::const_iterator first, VLVector::const_iterator last)
@@ -396,6 +601,13 @@ size_t VLVector<T, StaticCapacity>::_capC(const size_t &newElements) const
     }
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::_enlargeCapacity(const size_t &newElements)
 {
@@ -412,6 +624,13 @@ void VLVector<T, StaticCapacity>::_enlargeCapacity(const size_t &newElements)
     mCapacity = newCap;
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::_copyAllElements(T *destination) const
 {
@@ -424,20 +643,13 @@ void VLVector<T, StaticCapacity>::_copyAllElements(T *destination) const
     }
 }
 
-//TODO: consider deletion of this method
-template<class T, size_t StaticCapacity>
-template<class InputIterator>
-unsigned int VLVector<T, StaticCapacity>::_countElements(InputIterator from, InputIterator to) const
-{
-    unsigned int countedElements = 0;
-    while (from != to)
-    {
-        countedElements++;
-        from++;
-    }
-    return countedElements;
-}
-
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 void VLVector<T, StaticCapacity>::_switchToStackArr()
 {
@@ -447,6 +659,13 @@ void VLVector<T, StaticCapacity>::_switchToStackArr()
     mArrType = STATIC;
 }
 
+/**
+ * @brief
+ * @tparam T
+ * @tparam StaticCapacity
+ * @param position
+ * @return
+ */
 template<class T, size_t StaticCapacity>
 size_t VLVector<T, StaticCapacity>::_findIndexOf(VLVector::const_iterator position) const
 {
@@ -463,8 +682,6 @@ size_t VLVector<T, StaticCapacity>::_findIndexOf(VLVector::const_iterator positi
     }
     return mSize;
 }
-
-
 //endregion
 
 
